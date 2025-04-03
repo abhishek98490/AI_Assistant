@@ -1,0 +1,5 @@
+venv/
+logs/
+__pycache__/
+db/
+AI_assitant.egg-info/
