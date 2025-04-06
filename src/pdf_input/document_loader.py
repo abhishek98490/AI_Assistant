@@ -28,12 +28,10 @@ class Document_Loader():
         for page_num in range(len(doc)):
             page = doc.load_page(page_num)
 
-            # Try to extract selectable text
             text = page.get_text()
             if text.strip():
                 full_text += text + "\n"
             else:
-                # Fallback: Render page as image and OCR
                 pix = page.get_pixmap(dpi=300)
                 img_bytes = pix.tobytes("png")
                 image = Image.open(io.BytesIO(img_bytes))
