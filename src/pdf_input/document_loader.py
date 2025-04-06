@@ -1,6 +1,9 @@
 import os
 import docx
-import PyPDF2
+import fitz  # PyMuPDF
+import pytesseract
+from PIL import Image
+import io
 import sys
 from src.logger.logging import logging
 from src.exception.exception import customexception
@@ -18,13 +21,26 @@ class Document_Loader():
         doc = docx.Document(file_path)
         return "\n".join([paragraph.text for paragraph in doc.paragraphs])
 
-    def read_pdf(self,file_path:str):
-        text = ""
-        with open(file_path, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            for page in pdf_reader.pages:
-                text += page.extract_text() + "\n"
-        return text
+    def read_pdf(self,pdf_path: str) -> str:
+        doc = fitz.open(pdf_path)
+        full_text = ""
+
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+
+            # Try to extract selectable text
+            text = page.get_text()
+            if text.strip():
+                full_text += text + "\n"
+            else:
+                # Fallback: Render page as image and OCR
+                pix = page.get_pixmap(dpi=300)
+                img_bytes = pix.tobytes("png")
+                image = Image.open(io.BytesIO(img_bytes))
+                ocr_text = pytesseract.image_to_string(image)
+                full_text += ocr_text + "\n"
+
+        return full_text
 
     def document_loader(self,file_path:str):
         
@@ -58,4 +74,4 @@ class Document_Loader():
     
 if __name__=="__main__":
     document = Document_Loader()
-    print(document.document_loader("D:\\0MLOps\\RAG_Chatbot\\RAG_CHATBOT\\data\\text.txt"))
+    print(document.document_loader("/Users/abhishek/Codes/AI_Assistant/offer letter.pdf"))
